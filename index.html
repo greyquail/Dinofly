@@ -8,118 +8,117 @@
     body {
       margin: 0;
       overflow: hidden;
+      background-color: #87CEEB;
       font-family: Arial, sans-serif;
-      background-color: #f0f8ff;
     }
+
     .game-container {
       position: relative;
       width: 100vw;
       height: 100vh;
-      background-color: #87ceeb;
+      background-color: #87CEEB;
       overflow: hidden;
     }
+
     .dino {
       position: absolute;
       width: 50px;
       height: 50px;
-      background-color: #008000;
-      border-radius: 50%;
+      background-color: #32CD32;
+      border-radius: 10px;
       bottom: 50%;
-      left: 10%;
+      left: 20%;
     }
+
     .obstacle {
       position: absolute;
-      width: 40px;
-      height: 80px;
-      background-color: #ff4500;
+      width: 50px;
+      height: 50px;
+      background-color: #8B0000;
       bottom: 0;
-      animation: moveObstacle 3s linear infinite;
+      right: 0;
     }
-    .score {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      font-size: 20px;
-      font-weight: bold;
-      color: #000;
-    }
+
     .game-over {
-      display: none;
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 36px;
+      width: 100%;
+      text-align: center;
+      font-size: 30px;
       font-weight: bold;
-      color: red;
-    }
-    @keyframes moveObstacle {
-      from {
-        right: -50px;
-      }
-      to {
-        right: 100vw;
-      }
+      color: white;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: none;
+      padding: 20px;
+      top: 50%;
+      transform: translateY(-50%);
     }
   </style>
 </head>
 <body>
-  <div class="game-container" id="game">
+  <div class="game-container" id="gameContainer">
     <div class="dino" id="dino"></div>
-    <div class="score" id="score">Score: 0</div>
     <div class="game-over" id="gameOver">Game Over! Tap to Restart</div>
   </div>
+
   <script>
-    const dino = document.getElementById("dino");
-    const game = document.getElementById("game");
-    const scoreElement = document.getElementById("score");
-    const gameOverElement = document.getElementById("gameOver");
+    const gameContainer = document.getElementById('gameContainer');
+    const dino = document.getElementById('dino');
+    const gameOver = document.getElementById('gameOver');
 
-    let dinoY = 50; // Dino's vertical position (% of container height)
-    let gravity = 0.5; // Gravity effect
-    let flyForce = -10; // Dino's upward force when tapping
+    let dinoY = 50; // Dino's vertical position (%)
+    let velocity = 0; // Dino's vertical speed
+    const gravity = 0.5; // Gravity pulling the dino down
+    const lift = -8; // Lift when tapping
+    const obstacles = [];
     let isGameOver = false;
-    let score = 0;
 
-    // Move dino with physics
-    function updateDino() {
-      if (isGameOver) return;
-
-      dinoY += gravity;
-      if (dinoY > 100) dinoY = 100; // Prevent falling below screen
-      if (dinoY < 0) dinoY = 0; // Prevent flying above screen
-
-      dino.style.bottom = dinoY + "%";
-    }
-
-    // Handle tap to fly
-    window.addEventListener("touchstart", () => {
-      if (isGameOver) return;
-      gravity = flyForce;
-    });
-
-    // Spawn obstacles
+    // Create obstacles at intervals
     function spawnObstacle() {
       if (isGameOver) return;
 
-      const obstacle = document.createElement("div");
-      obstacle.classList.add("obstacle");
-      obstacle.style.height = Math.random() * 50 + 30 + "px";
-      obstacle.style.right = "-50px";
+      const obstacle = document.createElement('div');
+      obstacle.className = 'obstacle';
+      obstacle.style.bottom = Math.random() * 70 + '%'; // Random height
+      obstacle.style.right = '-50px';
+      gameContainer.appendChild(obstacle);
+      obstacles.push(obstacle);
 
-      game.appendChild(obstacle);
+      // Remove obstacle after it leaves the screen
+      setTimeout(() => {
+        gameContainer.removeChild(obstacle);
+        obstacles.shift();
+      }, 5000);
+    }
 
-      const moveObstacle = setInterval(() => {
-        if (isGameOver) {
-          clearInterval(moveObstacle);
-          obstacle.remove();
-          return;
-        }
+    // Update game elements
+    function updateGame() {
+      if (isGameOver) return;
 
-        const obstacleRect = obstacle.getBoundingClientRect();
+      // Apply gravity
+      velocity += gravity;
+      dinoY += velocity;
+
+      // Prevent dino from flying off-screen
+      if (dinoY < 0) {
+        dinoY = 0;
+        velocity = 0;
+      }
+      if (dinoY > 90) {
+        dinoY = 90;
+        velocity = 0;
+        endGame();
+      }
+
+      dino.style.bottom = dinoY + '%';
+
+      // Move obstacles
+      obstacles.forEach(obstacle => {
+        const obstacleRight = parseInt(obstacle.style.right);
+        obstacle.style.right = obstacleRight + 5 + 'px';
+
+        // Check for collision
         const dinoRect = dino.getBoundingClientRect();
-
-        // Check collision
+        const obstacleRect = obstacle.getBoundingClientRect();
         if (
           dinoRect.right > obstacleRect.left &&
           dinoRect.left < obstacleRect.right &&
@@ -127,57 +126,42 @@
           dinoRect.top < obstacleRect.bottom
         ) {
           endGame();
-          clearInterval(moveObstacle);
-          return;
         }
-
-        // Remove obstacle when out of bounds
-        if (obstacleRect.left < -50) {
-          clearInterval(moveObstacle);
-          obstacle.remove();
-          score++;
-          scoreElement.textContent = "Score: " + score;
-        }
-      }, 20);
+      });
     }
 
-    // Start spawning obstacles
-    function startSpawningObstacles() {
-      setInterval(() => {
-        if (!isGameOver) {
-          spawnObstacle();
-        }
-      }, 1500);
-    }
-
-    // End game
+    // End the game
     function endGame() {
       isGameOver = true;
-      gameOverElement.style.display = "block";
+      gameOver.style.display = 'block';
     }
 
-    // Restart game
-    window.addEventListener("click", () => {
-      if (isGameOver) {
-        isGameOver = false;
-        dinoY = 50;
-        score = 0;
-        scoreElement.textContent = "Score: 0";
-        gameOverElement.style.display = "none";
-        gravity = 0.5;
+    // Restart the game
+    function restartGame() {
+      isGameOver = false;
+      dinoY = 50;
+      velocity = 0;
+      gameOver.style.display = 'none';
 
-        // Clear remaining obstacles
-        document.querySelectorAll(".obstacle").forEach(obstacle => obstacle.remove());
+      // Remove all obstacles
+      obstacles.forEach(obstacle => gameContainer.removeChild(obstacle));
+      obstacles.length = 0;
+    }
+
+    // Tap to make the dino fly
+    gameContainer.addEventListener('click', () => {
+      if (isGameOver) {
+        restartGame();
+      } else {
+        velocity = lift;
       }
     });
 
-    // Start game
-    function startGame() {
-      setInterval(updateDino, 20);
-      startSpawningObstacles();
-    }
+    // Spawn obstacles every 2 seconds
+    setInterval(spawnObstacle, 2000);
 
-    startGame();
+    // Update game every 20ms
+    setInterval(updateGame, 20);
   </script>
 </body>
 </html>
