@@ -8,8 +8,8 @@
     body {
       margin: 0;
       overflow: hidden;
-      background-color: #87CEEB;
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
+      background-color: #f7f7f7;
     }
 
     .game-container {
@@ -22,35 +22,39 @@
 
     .dino {
       position: absolute;
-      width: 50px;
-      height: 50px;
-      background-color: #32CD32;
-      border-radius: 10px;
+      width: 60px;
+      height: 60px;
       bottom: 50%;
-      left: 20%;
+      left: 10%;
+      background-image: url('https://i.imgur.com/ZJ1GSsD.png');
+      background-size: contain;
+      background-repeat: no-repeat;
     }
 
     .obstacle {
       position: absolute;
-      width: 50px;
-      height: 50px;
-      background-color: #8B0000;
+      width: 60px;
+      height: 60px;
       bottom: 0;
       right: 0;
+      background-image: url('https://i.imgur.com/O6vVvZP.png');
+      background-size: contain;
+      background-repeat: no-repeat;
     }
 
     .game-over {
       position: absolute;
-      width: 100%;
-      text-align: center;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       font-size: 30px;
       font-weight: bold;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.6);
       color: white;
-      background-color: rgba(0, 0, 0, 0.7);
-      display: none;
       padding: 20px;
-      top: 50%;
-      transform: translateY(-50%);
+      border-radius: 10px;
+      display: none;
     }
   </style>
 </head>
@@ -65,7 +69,7 @@
     const dino = document.getElementById('dino');
     const gameOver = document.getElementById('gameOver');
 
-    let dinoY = 50; // Dino's vertical position (%)
+    let dinoY = 50; // Dino's vertical position in %
     let velocity = 0; // Dino's vertical speed
     const gravity = 0.5; // Gravity pulling the dino down
     const lift = -8; // Lift when tapping
@@ -85,8 +89,10 @@
 
       // Remove obstacle after it leaves the screen
       setTimeout(() => {
-        gameContainer.removeChild(obstacle);
-        obstacles.shift();
+        if (gameContainer.contains(obstacle)) {
+          gameContainer.removeChild(obstacle);
+          obstacles.shift();
+        }
       }, 5000);
     }
 
@@ -144,7 +150,11 @@
       gameOver.style.display = 'none';
 
       // Remove all obstacles
-      obstacles.forEach(obstacle => gameContainer.removeChild(obstacle));
+      obstacles.forEach(obstacle => {
+        if (gameContainer.contains(obstacle)) {
+          gameContainer.removeChild(obstacle);
+        }
+      });
       obstacles.length = 0;
     }
 
